@@ -76,6 +76,7 @@ const VALID_TRANSITIONS = {
   Exploring: ["PreparingReturn", "Failed"],
   PreparingReturn: ["Returning", "Failed"],
   Returning: ["Completed", "Failed"],
+  Completed: ["Planning"],
   Failed: ["Planning"],
 };
 

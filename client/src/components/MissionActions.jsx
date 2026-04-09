@@ -110,9 +110,20 @@ export default function MissionActions({ mission, lifecycle, onTransition, crewC
 
   if (status === "Completed") {
     return (
-      <div className="flex items-center gap-2 py-4 text-emerald-300">
-        <CheckCircle className="w-5 h-5" />
-        <span className="text-sm font-medium">Mission Complete</span>
+      <div className="flex flex-col items-center gap-3 py-4">
+        <div className="flex items-center gap-2 text-emerald-300">
+          <CheckCircle className="w-5 h-5" />
+          <span className="text-sm font-medium">Mission Complete</span>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onTransition(mission._id, "Planning")}
+          className="gap-2"
+        >
+          <RotateCcw className="w-3 h-3" />
+          Launch Again
+        </Button>
       </div>
     );
   }

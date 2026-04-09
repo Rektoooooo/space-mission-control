@@ -91,7 +91,27 @@ export default function SpaceScene({
 
   const phase = useScenePhase(missions, lifecycles);
   const { play } = useSounds();
-  const lastBeepRef = useRef(0);
+
+  // Track countdown number to beep on each tick
+  const currentCountdown = useMemo(() => {
+    for (const lc of Object.values(lifecycles)) {
+      if (lc.countdown !== undefined && lc.countdown > 0 && !lc.countdownDone) {
+        return lc.countdown;
+      }
+    }
+    return null;
+  }, [lifecycles]);
+
+  const prevCountdownRef = useRef(null);
+  useEffect(() => {
+    if (
+      currentCountdown !== null &&
+      currentCountdown !== prevCountdownRef.current
+    ) {
+      play("beep", { volume: 0.25 });
+    }
+    prevCountdownRef.current = currentCountdown;
+  }, [currentCountdown]);
 
   // Sound effects: launch and complete
   useEffect(() => {
@@ -105,28 +125,6 @@ export default function SpaceScene({
       play("complete", { volume: 0.5 });
     }
   }, [phase.completionFlash]);
-
-  // Sound effects: countdown beep every second
-  useEffect(() => {
-    if (!phase.hasCountdown) return;
-
-    const interval = setInterval(() => {
-      const now = Date.now();
-      // Only beep once per second
-      if (now - lastBeepRef.current >= 900) {
-        // Find any active countdown
-        const hasActiveCountdown = Object.values(lifecycles).some(
-          (lc) => lc.countdown !== undefined && lc.countdown > 0 && !lc.countdownDone
-        );
-        if (hasActiveCountdown) {
-          play("beep", { volume: 0.2 });
-          lastBeepRef.current = now;
-        }
-      }
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [phase.hasCountdown]);
 
   // Build scene CSS classes
   const sceneClasses = [
