@@ -102,7 +102,13 @@ export default function MissionsPanel({
         <div className="flex items-center gap-2">
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-36 h-8 text-xs">
-              <SelectValue placeholder="All statuses" />
+              <SelectValue>
+                {statusFilter === "all"
+                  ? "All statuses"
+                  : statusFilter === "PreparingReturn"
+                    ? "Preparing Return"
+                    : statusFilter}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All statuses</SelectItem>

@@ -185,18 +185,24 @@ export default function Rocket({ mission, lifecycle, onTransition }) {
     const exploreProgress = lifecycle?.progress ?? 50;
     const isExploring = mission.status === "Exploring";
 
-    // Lander phases
-    let landerPhase = null;
+    // Lander phases:
+    // Exploring 0-8%: descend from orbit to planet
+    // Exploring 8-100%: stay landed on planet
+    // PreparingReturn 0-30%: ascend from planet to orbit
+    // PreparingReturn 30%+: at orbit waiting for rocket pickup
+    let landerPhase = null; // null = hidden (docked)
     if (isExploring) {
       if (exploreProgress < 8) landerPhase = "descending";
-      else if (exploreProgress > 92) landerPhase = "ascending";
       else landerPhase = "landed";
     } else {
-      // PreparingReturn: show module at orbit top until rocket picks it up
-      if (!modulePickedUp) landerPhase = "atOrbit";
+      // PreparingReturn
+      if (!modulePickedUp) {
+        const returnCountdownProgress = lifecycle?.progress ?? 0;
+        if (returnCountdownProgress < 30) landerPhase = "ascending";
+        else landerPhase = "atOrbit";
+      }
     }
 
-    // Module position for "atOrbit" phase (sitting at top of orbit, waiting for pickup)
     let moduleOffsetY = -orbitRadius;
     if (landerPhase === "descending") {
       const t = Math.min(1, exploreProgress / 8);
@@ -204,8 +210,9 @@ export default function Rocket({ mission, lifecycle, onTransition }) {
     } else if (landerPhase === "landed") {
       moduleOffsetY = 0;
     } else if (landerPhase === "ascending") {
-      const t = Math.min(1, (exploreProgress - 92) / 8);
-      moduleOffsetY = -t * orbitRadius;
+      const returnCountdownProgress = lifecycle?.progress ?? 0;
+      const t = Math.min(1, returnCountdownProgress / 30);
+      moduleOffsetY = (1 - t) * 0 + t * -orbitRadius;
     } else if (landerPhase === "atOrbit") {
       moduleOffsetY = -orbitRadius;
     }
