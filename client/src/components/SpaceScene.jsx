@@ -7,12 +7,12 @@ import { ROCKET_VISIBLE_STATUSES, ACTIVE_STATUSES } from "@/lib/missionConstants
 import { useSounds } from "@/hooks/useSounds";
 
 const PLANET_LAYOUT = [
-  { name: "Moon", style: { left: "22%", top: "6%" } },
-  { name: "Mars", style: { right: "18%", top: "8%" } },
-  { name: "Europa", style: { left: "5%", top: "38%" } },
-  { name: "Titan", style: { right: "5%", top: "36%" } },
-  { name: "Venus", style: { right: "10%", top: "56%" } },
-  { name: "Saturn", style: { left: "6%", top: "58%" } },
+  { name: "Moon", style: { left: "22%", top: "6%", transform: "translateX(-50%)" } },
+  { name: "Mars", style: { left: "80%", top: "8%", transform: "translateX(-50%)" } },
+  { name: "Europa", style: { left: "8%", top: "38%", transform: "translateX(-50%)" } },
+  { name: "Titan", style: { left: "92%", top: "36%", transform: "translateX(-50%)" } },
+  { name: "Venus", style: { left: "88%", top: "56%", transform: "translateX(-50%)" } },
+  { name: "Saturn", style: { left: "8%", top: "58%", transform: "translateX(-50%)" } },
 ];
 
 /**
@@ -78,6 +78,7 @@ export default function SpaceScene({
   lifecycles = {},
   selectedDestination,
   onPlanetClick,
+  onTransition,
 }) {
   const rocketMissions = missions.filter((m) =>
     ROCKET_VISIBLE_STATUSES.includes(m.status)
@@ -166,6 +167,7 @@ export default function SpaceScene({
           key={mission._id}
           mission={mission}
           lifecycle={lifecycles[mission._id]}
+          onTransition={onTransition}
         />
       ))}
     </div>

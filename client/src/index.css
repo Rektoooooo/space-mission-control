@@ -233,6 +233,12 @@
   animation-duration: 3s !important;
 }
 
+/* ===== ORBIT ANIMATION ===== */
+@keyframes orbit-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 /* ===== PLANET SCANNING / EXPLORING EFFECT ===== */
 .planet-exploring {
   position: relative;

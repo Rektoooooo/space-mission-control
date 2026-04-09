@@ -22,7 +22,7 @@ export default function Earth({ phase = "idle" }) {
         <img
           src={earthImg}
           alt="Earth"
-          className="w-40 h-40 md:w-56 md:h-56 object-contain"
+          className="w-48 h-48 md:w-64 md:h-64 object-contain"
           draggable={false}
         />
       </div>

@@ -58,15 +58,15 @@ export function useMissionLifecycles(missions, onTransition) {
             elapsed: elapsedSec,
             totalDuration: COUNTDOWN_DURATION,
           };
-          // Auto-launch when countdown finishes
+          // Auto-launch when countdown finishes (only for Preparing, not PreparingReturn)
+          // PreparingReturn waits for the Rocket component to find the Earth-facing orbit angle
           if (
             remaining <= 0 &&
+            mission.status === "Preparing" &&
             !transitioningRef.current.has(mission._id)
           ) {
             transitioningRef.current.add(mission._id);
-            const next =
-              mission.status === "Preparing" ? "Traveling" : "Returning";
-            onTransitionRef.current(mission._id, next)
+            onTransitionRef.current(mission._id, "Traveling")
               .catch((err) => console.error("Auto-launch failed:", err))
               .finally(() => transitioningRef.current.delete(mission._id));
           }

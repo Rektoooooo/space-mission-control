@@ -30,7 +30,15 @@ export default function Planet({
   onClick,
 }) {
   const img = PLANET_IMAGES[name];
-  const size = name === "Saturn" ? 80 : 64;
+  const PLANET_SIZES = {
+    Saturn: 120,
+    Mars: 100,
+    Venus: 95,
+    Europa: 85,
+    Titan: 85,
+    Moon: 75,
+  };
+  const size = PLANET_SIZES[name] || 90;
 
   const classNames = [
     "flex flex-col items-center",

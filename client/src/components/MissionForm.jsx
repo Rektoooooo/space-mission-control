@@ -16,13 +16,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import rocket1Img from "@/assets/rockets/rocket1.png";
+import rocket2Img from "@/assets/rockets/rocket2.png";
+import rocket3Img from "@/assets/rockets/rocket3.png";
 
 const DESTINATIONS = ["Moon", "Mars", "Europa", "Titan", "Venus", "Saturn"];
+const ROCKET_OPTIONS = [
+  { value: "falcon9", label: "Falcon 9", img: rocket1Img },
+  { value: "shuttle", label: "Space Shuttle", img: rocket2Img },
+  { value: "saturnV", label: "Saturn V", img: rocket3Img },
+];
 
 const EMPTY = {
   name: "",
   destination: "Moon",
   launchDate: "",
+  rocketType: "falcon9",
   description: "",
 };
 
@@ -36,6 +45,7 @@ export default function MissionForm({ open, onClose, onSubmit, mission }) {
         name: mission.name,
         destination: mission.destination,
         launchDate: mission.launchDate?.slice(0, 10) || "",
+        rocketType: mission.rocketType || "falcon9",
         description: mission.description || "",
       });
     } else {
@@ -48,6 +58,9 @@ export default function MissionForm({ open, onClose, onSubmit, mission }) {
     onSubmit(form);
     onClose();
   };
+
+  const currentRocket =
+    ROCKET_OPTIONS.find((r) => r.value === form.rocketType) || ROCKET_OPTIONS[0];
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -95,6 +108,40 @@ export default function MissionForm({ open, onClose, onSubmit, mission }) {
                   setForm({ ...form, launchDate: e.target.value })
                 }
                 required
+              />
+            </div>
+          </div>
+          {/* Rocket selector with preview */}
+          <div className="space-y-2">
+            <Label>Rocket</Label>
+            <div className="flex items-center gap-3">
+              <Select
+                value={form.rocketType}
+                onValueChange={(v) => setForm({ ...form, rocketType: v })}
+              >
+                <SelectTrigger className="flex-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {ROCKET_OPTIONS.map((r) => (
+                    <SelectItem key={r.value} value={r.value}>
+                      <span className="flex items-center gap-2">
+                        <img
+                          src={r.img}
+                          alt={r.label}
+                          className="w-4 h-4 object-contain"
+                        />
+                        {r.label}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <img
+                src={currentRocket.img}
+                alt={currentRocket.label}
+                className="w-14 h-14 object-contain"
+                draggable={false}
               />
             </div>
           </div>

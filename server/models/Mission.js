@@ -35,6 +35,11 @@ const missionSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    rocketType: {
+      type: String,
+      enum: ["falcon9", "shuttle", "saturnV"],
+      default: "falcon9",
+    },
     description: {
       type: String,
       trim: true,

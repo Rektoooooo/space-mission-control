@@ -1,179 +1,283 @@
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import rocket1Img from "@/assets/rockets/rocket1.png";
 import rocket2Img from "@/assets/rockets/rocket2.png";
+import rocket3Img from "@/assets/rockets/rocket3.png";
+import landerImg from "@/assets/rockets/lander.png";
 import { ROCKET_VISIBLE_STATUSES } from "@/lib/missionConstants";
 
-const ROCKETS = [rocket1Img, rocket2Img];
+const ROCKET_IMAGES = {
+  falcon9: rocket1Img,
+  shuttle: rocket2Img,
+  saturnV: rocket3Img,
+};
 
 const PLANET_POSITIONS = {
-  Moon: { x: 25, y: 8 },
-  Mars: { x: 78, y: 10 },
-  Europa: { x: 8, y: 40 },
-  Titan: { x: 90, y: 38 },
-  Venus: { x: 85, y: 58 },
-  Saturn: { x: 10, y: 60 },
+  Moon: { x: 22, y: 6 },
+  Mars: { x: 80, y: 8 },
+  Europa: { x: 8, y: 38 },
+  Titan: { x: 92, y: 36 },
+  Venus: { x: 88, y: 56 },
+  Saturn: { x: 8, y: 58 },
 };
 
 const EARTH_POS = { x: 50, y: 35 };
 
-function hashIndex(id, count) {
-  let hash = 0;
-  for (let i = 0; i < id.length; i++) {
-    hash = (hash * 31 + id.charCodeAt(i)) | 0;
-  }
-  return Math.abs(hash) % count;
-}
+const PLANET_SIZES = {
+  Saturn: 120, Mars: 100, Venus: 95, Europa: 85, Titan: 85, Moon: 75,
+};
 
-/** Thruster flame rendered behind the rocket when traveling */
-function ThrusterFlame({ angle, isMoving }) {
-  if (!isMoving) return null;
+const ORBIT_DURATION = 6;
 
-  // The flame points opposite to the direction of travel.
-  // The rocket image is rotated by `angle` (where 0 = pointing up).
-  // We position the flame below the rocket (at the bottom) and it
-  // inherits the rotation from the parent, so we just place it offset downward.
+function ThrusterFlame() {
   return (
-    <div
-      className="absolute left-1/2 -translate-x-1/2 pointer-events-none"
-      style={{ top: "100%", width: 20 }}
-    >
-      {/* Core flame */}
-      <motion.div
-        className="mx-auto rounded-full"
-        style={{
-          width: 6,
-          background: "linear-gradient(to bottom, #fff, #fbbf24, #f97316, transparent)",
-        }}
-        animate={{
-          height: [16, 22, 14, 20, 16],
-          opacity: [0.9, 1, 0.85, 1, 0.9],
-        }}
-        transition={{
-          duration: 0.3,
-          repeat: Infinity,
-          ease: "linear",
-        }}
+    <div className="absolute left-1/2 -translate-x-1/2 pointer-events-none" style={{ top: "100%", width: 20 }}>
+      <motion.div className="mx-auto rounded-full"
+        style={{ width: 6, background: "linear-gradient(to bottom, #fff, #fbbf24, #f97316, transparent)" }}
+        animate={{ height: [16, 22, 14, 20, 16], opacity: [0.9, 1, 0.85, 1, 0.9] }}
+        transition={{ duration: 0.3, repeat: Infinity, ease: "linear" }}
       />
-      {/* Outer glow */}
-      <motion.div
-        className="absolute top-0 left-1/2 -translate-x-1/2 rounded-full"
-        style={{
-          width: 14,
-          background: "radial-gradient(circle, rgba(251,191,36,0.5), rgba(249,115,22,0.2), transparent)",
-          filter: "blur(3px)",
-        }}
-        animate={{
-          height: [20, 28, 18, 26, 20],
-          opacity: [0.6, 0.8, 0.5, 0.7, 0.6],
-        }}
-        transition={{
-          duration: 0.25,
-          repeat: Infinity,
-          ease: "linear",
-        }}
+      <motion.div className="absolute top-0 left-1/2 -translate-x-1/2 rounded-full"
+        style={{ width: 14, background: "radial-gradient(circle, rgba(251,191,36,0.5), rgba(249,115,22,0.2), transparent)", filter: "blur(3px)" }}
+        animate={{ height: [20, 28, 18, 26, 20], opacity: [0.6, 0.8, 0.5, 0.7, 0.6] }}
+        transition={{ duration: 0.25, repeat: Infinity, ease: "linear" }}
       />
-      {/* Particle sparks */}
       {[0, 1, 2].map((i) => (
-        <motion.div
-          key={i}
-          className="absolute rounded-full"
-          style={{
-            width: 2,
-            height: 2,
-            background: i === 0 ? "#fbbf24" : i === 1 ? "#f97316" : "#fde68a",
-            left: `${8 + (i - 1) * 4}px`,
-          }}
-          animate={{
-            top: [14, 28 + i * 6, 14],
-            opacity: [0.8, 0, 0.8],
-          }}
-          transition={{
-            duration: 0.5 + i * 0.15,
-            repeat: Infinity,
-            ease: "easeOut",
-            delay: i * 0.1,
-          }}
+        <motion.div key={i} className="absolute rounded-full"
+          style={{ width: 2, height: 2, background: ["#fbbf24", "#f97316", "#fde68a"][i], left: `${8 + (i - 1) * 4}px` }}
+          animate={{ top: [14, 28 + i * 6, 14], opacity: [0.8, 0, 0.8] }}
+          transition={{ duration: 0.5 + i * 0.15, repeat: Infinity, ease: "easeOut", delay: i * 0.1 }}
         />
       ))}
     </div>
   );
 }
 
-export default function Rocket({ mission, lifecycle }) {
-  const dest = PLANET_POSITIONS[mission.destination];
-  if (!dest || !ROCKET_VISIBLE_STATUSES.includes(mission.status)) return null;
-
-  // Only use progress for movement phases (Traveling/Returning), not stale countdown progress
-  const isMovementPhase = mission.status === "Traveling" || mission.status === "Returning";
-  const progress = isMovementPhase ? (lifecycle?.progress ?? 0) : 0;
-  let currentX, currentY, angle;
-  let isMoving = false;
-
-  if (mission.status === "Traveling") {
-    const t = progress / 100;
-    currentX = EARTH_POS.x + (dest.x - EARTH_POS.x) * t;
-    currentY = EARTH_POS.y + (dest.y - EARTH_POS.y) * t;
-    angle =
-      Math.atan2(dest.y - EARTH_POS.y, dest.x - EARTH_POS.x) *
-        (180 / Math.PI) +
-      90;
-    isMoving = true;
-  } else if (
-    mission.status === "Exploring" ||
-    mission.status === "PreparingReturn"
-  ) {
-    currentX = dest.x;
-    currentY = dest.y;
-    angle = 0;
-  } else if (mission.status === "Returning") {
-    const t = progress / 100;
-    currentX = dest.x + (EARTH_POS.x - dest.x) * t;
-    currentY = dest.y + (EARTH_POS.y - dest.y) * t;
-    angle =
-      Math.atan2(EARTH_POS.y - dest.y, EARTH_POS.x - dest.x) *
-        (180 / Math.PI) +
-      90;
-    isMoving = true;
-  }
-
-  const rocketImg = ROCKETS[hashIndex(mission._id, ROCKETS.length)];
+/** Flying rocket (Earth↔Planet) */
+function FlyingRocket({ rocketImg, fromX, fromY, toX, toY, progress }) {
+  const t = progress / 100;
+  const x = fromX + (toX - fromX) * t;
+  const y = fromY + (toY - fromY) * t;
+  const angle = Math.atan2(toY - fromY, toX - fromX) * (180 / Math.PI) + 90;
 
   return (
-    <div
-      className="absolute z-20 pointer-events-none"
-      style={{
-        left: `${currentX}%`,
-        top: `${currentY}%`,
-        transform: "translate(-50%, -50%)",
-        transition: "left 0.06s linear, top 0.06s linear",
-      }}
-    >
-      <div
-        className="relative"
-        style={{ transform: `rotate(${angle}deg)` }}
-      >
-        <img
-          src={rocketImg}
-          alt="Rocket"
-          className="w-8 h-8 md:w-10 md:h-10 object-contain relative z-10"
-          draggable={false}
+    <div className="absolute z-20 pointer-events-none" style={{
+      left: `${x}%`, top: `${y}%`,
+      transform: "translate(-50%, -50%)",
+      transition: "left 0.06s linear, top 0.06s linear",
+    }}>
+      <div className="relative" style={{ transform: `rotate(${angle}deg)` }}>
+        <img src={rocketImg} alt="Rocket"
+          className="w-14 h-14 md:w-18 md:h-18 object-contain relative z-10" draggable={false} />
+        <ThrusterFlame />
+        <motion.div className="absolute inset-0 rounded-full -z-10"
+          style={{ background: "radial-gradient(circle, rgba(251,191,36,0.15), transparent 70%)", margin: "-6px" }}
+          animate={{ opacity: [0.4, 0.7, 0.4] }}
+          transition={{ duration: 0.8, repeat: Infinity, ease: "easeInOut" }}
         />
-        <ThrusterFlame angle={angle} isMoving={isMoving} />
-        {/* Thruster glow halo around the rocket when moving */}
-        {isMoving && (
-          <motion.div
-            className="absolute inset-0 rounded-full -z-10"
-            style={{
-              background: "radial-gradient(circle, rgba(251,191,36,0.15), transparent 70%)",
-              margin: "-6px",
-            }}
-            animate={{ opacity: [0.4, 0.7, 0.4] }}
-            transition={{ duration: 0.8, repeat: Infinity, ease: "easeInOut" }}
-          />
-        )}
       </div>
     </div>
   );
+}
+
+export default function Rocket({ mission, lifecycle, onTransition }) {
+  const dest = PLANET_POSITIONS[mission.destination];
+  if (!dest || !ROCKET_VISIBLE_STATUSES.includes(mission.status)) return null;
+
+  const isMovementPhase = mission.status === "Traveling" || mission.status === "Returning";
+  const progress = isMovementPhase ? (lifecycle?.progress ?? 0) : 0;
+  const rocketImg = ROCKET_IMAGES[mission.rocketType] || rocket1Img;
+
+  const planetSize = PLANET_SIZES[mission.destination] || 90;
+  const orbitRadius = planetSize / 2 + 30;
+
+  // JS-driven orbit angle (continuous, based on Date.now)
+  const [orbitAngle, setOrbitAngle] = useState(0);
+  const [modulePickedUp, setModulePickedUp] = useState(false);
+  const orbitStartRef = useRef(null);
+  const departedRef = useRef(false);
+
+  // Compute the orbit angle where the rocket's nose faces Earth
+  // At orbit angle θ, the rocket nose points in direction θ (standard screen coords: right=0, down=π/2)
+  // So we need θ = atan2(dy, dx) from planet to Earth
+  const earthDirAngle = Math.atan2(EARTH_POS.y - dest.y, EARTH_POS.x - dest.x);
+  const departAngle = ((earthDirAngle % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+
+  // Track orbit start time when entering Exploring
+  useEffect(() => {
+    if (mission.status === "Exploring" && !orbitStartRef.current) {
+      orbitStartRef.current = Date.now();
+      setModulePickedUp(false);
+      departedRef.current = false;
+    }
+    if (mission.status !== "Exploring" && mission.status !== "PreparingReturn") {
+      orbitStartRef.current = null;
+      departedRef.current = false;
+    }
+  }, [mission.status]);
+
+  // Animate orbit angle
+  useEffect(() => {
+    if (mission.status !== "Exploring" && mission.status !== "PreparingReturn") return;
+    if (!orbitStartRef.current) orbitStartRef.current = Date.now();
+
+    const interval = setInterval(() => {
+      const elapsed = (Date.now() - orbitStartRef.current) / 1000;
+      const angle = ((elapsed % ORBIT_DURATION) / ORBIT_DURATION) * Math.PI * 2;
+      setOrbitAngle(angle);
+
+      // Module pickup: during PreparingReturn, when rocket passes top (angle near 0 or 2PI)
+      if (mission.status === "PreparingReturn" && !modulePickedUp) {
+        const normalizedAngle = angle % (Math.PI * 2);
+        if (normalizedAngle < 0.3 || normalizedAngle > Math.PI * 2 - 0.3) {
+          setModulePickedUp(true);
+        }
+      }
+
+      // Departure: during PreparingReturn, after countdown done, when rocket faces Earth
+      if (
+        mission.status === "PreparingReturn" &&
+        lifecycle?.countdownDone &&
+        !departedRef.current &&
+        onTransition
+      ) {
+        const normalizedAngle = angle % (Math.PI * 2);
+        // Check if current angle is within 0.2 radians of the Earth-facing angle
+        let diff = Math.abs(normalizedAngle - departAngle);
+        if (diff > Math.PI) diff = Math.PI * 2 - diff;
+        if (diff < 0.2) {
+          departedRef.current = true;
+          onTransition(mission._id, "Returning");
+        }
+      }
+    }, 30);
+
+    return () => clearInterval(interval);
+  }, [mission.status, mission._id, modulePickedUp, lifecycle?.countdownDone]);
+
+  // Orbit box setup
+  const rocketSize = 44;
+  const boxSize = orbitRadius * 2 + rocketSize;
+  const center = boxSize / 2;
+
+  // Compute rocket position on orbit circle
+  // angle 0 = top, goes clockwise: sin for X offset, -cos for Y offset
+  const orbitRocketX = center + Math.sin(orbitAngle) * orbitRadius - rocketSize / 2;
+  const orbitRocketY = center - Math.cos(orbitAngle) * orbitRadius - rocketSize / 2;
+  // Tangent rotation: nose points along orbit direction (clockwise)
+  const orbitRotation = (orbitAngle * 180) / Math.PI;
+
+  // departAngle already computed above
+
+  // Traveling: fly from Earth to orbit entry (top of orbit circle)
+  if (mission.status === "Traveling") {
+    return (
+      <FlyingRocket rocketImg={rocketImg}
+        fromX={EARTH_POS.x} fromY={EARTH_POS.y}
+        toX={dest.x} toY={dest.y}
+        progress={progress}
+      />
+    );
+  }
+
+  // Exploring / PreparingReturn: JS-driven orbit + landing module
+  if (mission.status === "Exploring" || mission.status === "PreparingReturn") {
+    const exploreProgress = lifecycle?.progress ?? 50;
+    const isExploring = mission.status === "Exploring";
+
+    // Lander phases
+    let landerPhase = null;
+    if (isExploring) {
+      if (exploreProgress < 8) landerPhase = "descending";
+      else if (exploreProgress > 92) landerPhase = "ascending";
+      else landerPhase = "landed";
+    } else {
+      // PreparingReturn: show module at orbit top until rocket picks it up
+      if (!modulePickedUp) landerPhase = "atOrbit";
+    }
+
+    // Module position for "atOrbit" phase (sitting at top of orbit, waiting for pickup)
+    let moduleOffsetY = -orbitRadius;
+    if (landerPhase === "descending") {
+      const t = Math.min(1, exploreProgress / 8);
+      moduleOffsetY = -orbitRadius + t * orbitRadius;
+    } else if (landerPhase === "landed") {
+      moduleOffsetY = 0;
+    } else if (landerPhase === "ascending") {
+      const t = Math.min(1, (exploreProgress - 92) / 8);
+      moduleOffsetY = -t * orbitRadius;
+    } else if (landerPhase === "atOrbit") {
+      moduleOffsetY = -orbitRadius;
+    }
+
+    return (
+      <div className="absolute z-20 pointer-events-none" style={{
+        left: `calc(${dest.x}% + ${planetSize / 2}px)`,
+        top: `calc(${dest.y}% + ${planetSize / 2}px)`,
+        width: boxSize, height: boxSize,
+        transform: "translate(-50%, -50%)",
+      }}>
+        {/* Orbit path */}
+        <div style={{
+          position: "absolute",
+          left: center - orbitRadius, top: center - orbitRadius,
+          width: orbitRadius * 2, height: orbitRadius * 2,
+          borderRadius: "50%", border: "1px solid rgba(255,255,255,0.08)",
+        }} />
+
+        {/* JS-driven orbiting rocket */}
+        <img src={rocketImg} alt="Rocket" style={{
+          position: "absolute", width: rocketSize, height: rocketSize,
+          objectFit: "contain",
+          left: orbitRocketX, top: orbitRocketY,
+          transform: `rotate(${orbitRotation + 90}deg)`,
+        }} draggable={false} />
+
+        {/* Landing module */}
+        {landerPhase && (
+          <div className="pointer-events-none z-10" style={{
+            position: "absolute",
+            left: center - 16, top: center - 16 + moduleOffsetY,
+            transition: "top 0.5s ease-in-out",
+          }}>
+            <img src={landerImg} alt="Landing Module"
+              style={{ width: 32, height: 32, objectFit: "contain" }} draggable={false} />
+            {(landerPhase === "descending" || landerPhase === "ascending") && (
+              <motion.div style={{
+                position: "absolute", left: "50%", marginLeft: -2, width: 4,
+                background: "linear-gradient(to bottom, #fbbf24, transparent)",
+                top: landerPhase === "descending" ? -8 : "100%",
+                transform: landerPhase === "descending" ? "rotate(180deg)" : "none",
+              }}
+                animate={{ height: [4, 10, 4], opacity: [0.6, 1, 0.6] }}
+                transition={{ duration: 0.2, repeat: Infinity }}
+              />
+            )}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Returning: depart from the Earth-facing point on the orbit
+  if (mission.status === "Returning") {
+    // Convert orbit departure angle to viewport % offset
+    // orbitRadius is in px, approximate as % of viewport (~900px height, ~1600px width)
+    const orbitPxToPercentX = orbitRadius / 16; // rough: 1600px viewport width
+    const orbitPxToPercentY = orbitRadius / 9;  // rough: 900px viewport height
+    const depX = dest.x + Math.sin(departAngle) * orbitPxToPercentX;
+    const depY = dest.y - Math.cos(departAngle) * orbitPxToPercentY + (planetSize / 900) * 100;
+
+    return (
+      <FlyingRocket rocketImg={rocketImg}
+        fromX={depX} fromY={depY}
+        toX={EARTH_POS.x} toY={EARTH_POS.y}
+        progress={progress}
+      />
+    );
+  }
+
+  return null;
 }
 
 export { PLANET_POSITIONS };

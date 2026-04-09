@@ -22,12 +22,22 @@ import { ArrowLeft, UserPlus, UserMinus, AlertTriangle } from "lucide-react";
 import { STATUS_COLORS } from "@/lib/missionConstants";
 import * as api from "@/lib/api";
 import MissionActions from "./MissionActions";
+import rocket1Img from "@/assets/rockets/rocket1.png";
+import rocket2Img from "@/assets/rockets/rocket2.png";
+import rocket3Img from "@/assets/rockets/rocket3.png";
+
+const ROCKET_OPTIONS = [
+  { value: "falcon9", label: "Falcon 9", img: rocket1Img },
+  { value: "shuttle", label: "Space Shuttle", img: rocket2Img },
+  { value: "saturnV", label: "Saturn V", img: rocket3Img },
+];
 
 export default function MissionDetail({
   missions,
   lifecycles,
   crewMembers,
   onTransition,
+  onUpdateMission,
   onUpdateCrew,
   onRefreshCrew,
 }) {
@@ -83,6 +93,14 @@ export default function MissionDetail({
     }
   };
 
+  const handleRocketChange = (rocketType) => {
+    onUpdateMission(mission._id, { rocketType });
+  };
+
+  const currentRocket =
+    ROCKET_OPTIONS.find((r) => r.value === mission.rocketType) ||
+    ROCKET_OPTIONS[0];
+
   return (
     <div className="space-y-3">
       {/* Header */}
@@ -116,6 +134,52 @@ export default function MissionDetail({
 
       {mission.description && (
         <p className="text-xs text-muted-foreground">{mission.description}</p>
+      )}
+
+      {/* Rocket selector + preview — only during Planning */}
+      {isPlanning && (
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 flex-1">
+            <span className="text-xs text-muted-foreground">Rocket:</span>
+            <Select
+              value={mission.rocketType || "falcon9"}
+              onValueChange={handleRocketChange}
+            >
+              <SelectTrigger className="w-40 h-8 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {ROCKET_OPTIONS.map((r) => (
+                  <SelectItem key={r.value} value={r.value}>
+                    <span className="flex items-center gap-2">
+                      <img src={r.img} alt={r.label} className="w-4 h-4 object-contain" />
+                      {r.label}
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <img
+            src={currentRocket.img}
+            alt={currentRocket.label}
+            className="w-12 h-12 object-contain"
+            draggable={false}
+          />
+        </div>
+      )}
+
+      {/* Show rocket preview when not planning */}
+      {!isPlanning && (
+        <div className="flex items-center gap-2">
+          <img
+            src={currentRocket.img}
+            alt={currentRocket.label}
+            className="w-8 h-8 object-contain"
+            draggable={false}
+          />
+          <span className="text-xs text-muted-foreground">{currentRocket.label}</span>
+        </div>
       )}
 
       {/* Lifecycle Actions */}

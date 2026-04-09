@@ -36,6 +36,7 @@ function Dashboard() {
         lifecycles={lifecycles}
         selectedDestination={selectedDestination}
         onPlanetClick={handlePlanetClick}
+        onTransition={transition}
       />
       <ControlPanel>
         <Routes>
@@ -73,6 +74,7 @@ function Dashboard() {
                 lifecycles={lifecycles}
                 crewMembers={crewMembers}
                 onTransition={transition}
+                onUpdateMission={update}
                 onUpdateCrew={updateCrew}
                 onRefreshCrew={fetchCrewMembers}
               />
