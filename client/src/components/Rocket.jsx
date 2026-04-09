@@ -266,18 +266,11 @@ export default function Rocket({ mission, lifecycle, onTransition }) {
     );
   }
 
-  // Returning: depart from the Earth-facing point on the orbit
+  // Returning: depart from near the planet toward Earth
   if (mission.status === "Returning") {
-    // Convert orbit departure angle to viewport % offset
-    // orbitRadius is in px, approximate as % of viewport (~900px height, ~1600px width)
-    const orbitPxToPercentX = orbitRadius / 16; // rough: 1600px viewport width
-    const orbitPxToPercentY = orbitRadius / 9;  // rough: 900px viewport height
-    const depX = dest.x + Math.sin(departAngle) * orbitPxToPercentX;
-    const depY = dest.y - Math.cos(departAngle) * orbitPxToPercentY + (planetSize / 900) * 100;
-
     return (
       <FlyingRocket rocketImg={rocketImg}
-        fromX={depX} fromY={depY}
+        fromX={dest.x} fromY={dest.y}
         toX={EARTH_POS.x} toY={EARTH_POS.y}
         progress={progress}
       />
