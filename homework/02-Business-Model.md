@@ -6,13 +6,15 @@
 ┌──────────────────────────────┐         ┌──────────────────────────────────┐
 │          MISSION             │         │          CREW MEMBER             │
 │──────────────────────────────│         │──────────────────────────────────│
-│  _id        : ObjectId (PK) │         │  _id             : ObjectId (PK)│
-│  name       : String [req]  │ 1     N │  name            : String [req] │
-│  destination: String [req]  │◄────────│  role            : String [req] │
-│  launchDate : Date   [req]  │         │  nationality     : String [req] │
-│  status     : String [req]  │         │  experienceLevel : String [req] │
-│  description: String [opt]  │         │  missionId       : ObjectId (FK)│
-└──────────────────────────────┘         └──────────────────────────────────┘
+│  _id           : ObjectId (PK) │         │  _id             : ObjectId (PK)│
+│  name          : String [req]  │ 1     N │  name            : String [req] │
+│  destination   : String [req]  │◄────────│  role            : String [req] │
+│  launchDate    : Date   [req]  │         │  nationality     : String [req] │
+│  status        : String [req]  │         │  experienceLevel : String [req] │
+│  phaseStartedAt: Date   [opt]  │         │  missionId       : ObjectId (FK)│
+│  rocketType    : String [req]  │         └──────────────────────────────────┘
+│  description   : String [opt]  │
+└────────────────────────────────┘
 
 Relationship: One Mission has many CrewMembers (1:N)
 A CrewMember references a Mission via missionId (optional — can be unassigned)
@@ -24,14 +26,16 @@ A CrewMember references a Mission via missionId (optional — can be unassigned)
 
 **Purpose:** Represents a space exploration expedition. Each mission defines a destination, timeline, objective, and tracks its current progress through a lifecycle of statuses.
 
-| Attribute   | Type     | Required | Constraints                                           |
-|-------------|----------|----------|-------------------------------------------------------|
-| _id         | ObjectId | auto     | Primary key, auto-generated                           |
-| name        | String   | yes      | Non-empty, e.g. "Mars Odyssey"                        |
-| destination | String   | yes      | E.g. Moon, Mars, Europa, Titan, Venus, Saturn         |
-| launchDate  | Date     | yes      | Planned launch date                                   |
-| status      | String   | yes      | Enum: `Planning`, `Launched`, `Completed`, `Failed`   |
-| description | String   | no       | Free-text mission objective                           |
+| Attribute      | Type     | Required | Constraints                                           |
+|----------------|----------|----------|-------------------------------------------------------|
+| _id            | ObjectId | auto     | Primary key, auto-generated                           |
+| name           | String   | yes      | Non-empty, e.g. "Mars Odyssey"                        |
+| destination    | String   | yes      | E.g. Moon, Mars, Europa, Titan, Venus, Saturn         |
+| launchDate     | Date     | yes      | Planned launch date                                   |
+| status         | String   | yes      | Enum: `Planning`, `Preparing`, `Traveling`, `Exploring`, `PreparingReturn`, `Returning`, `Completed`, `Failed` |
+| phaseStartedAt | Date     | no       | Tracks when the current phase began (set on transition) |
+| rocketType     | String   | yes      | Enum: `falcon9`, `shuttle`, `saturnV` (default: `falcon9`) |
+| description    | String   | no       | Free-text mission objective                           |
 
 ### CrewMember
 
@@ -142,17 +146,22 @@ A CrewMember references a Mission via missionId (optional — can be unassigned)
 **Main Flow:**
 
 1. User navigates to the Missions page
-2. System displays all missions with visual status indicators (color-coded badges)
+2. System displays all missions with visual status indicators (color-coded badges and progress bars)
 3. User clicks on a mission to view its details
-4. User changes the mission status (e.g. Planning → Launched)
-5. System validates the status transition and updates the mission
-6. System reflects the new status with updated visual indicators
+4. System displays phase-specific action buttons (e.g. "Prepare for Takeoff" in Planning, countdown timer in Preparing)
+5. User clicks the phase action button to transition the mission (e.g. Planning → Preparing)
+6. System validates the transition via PATCH /api/missions/:id/transition and updates the mission status and phaseStartedAt
+7. System reflects the new status with updated visual indicators, animations, and sound effects
 
 **Alternative Flows:**
 
+- **Invalid transition:** System rejects the transition and displays an error (e.g. "Cannot transition from Planning to Traveling")
+- **No crew assigned:** System rejects Planning → Preparing if no crew members are assigned
+- **Abort mission:** User can transition any active phase to Failed
+- **Reset mission:** User can transition Completed or Failed back to Planning
 - **Filter by status:** User selects a status filter → system shows only missions matching that status
 - **Filter by destination:** User selects a destination filter → system shows only missions to that destination
 - **Sort:** User sorts missions by launch date, name, or status
 
 **Preconditions:** At least one mission exists
-**Postconditions:** Mission status is updated in the database
+**Postconditions:** Mission status and phaseStartedAt are updated in the database

@@ -134,7 +134,7 @@
 | SpaceScene         | Full-screen space visualization with stars, Earth, planets, rockets |
 | Earth              | Centered Earth with phase-dependent glow effects     |
 | Planet             | Destination planets with tooltips, scanning effects  |
-| Rocket             | Progress-driven animated rocket with thruster flame  |
+| Rocket             | Progress-driven animated rocket with JS-driven orbit animation, landing module deploy/retrieve, and thruster flame |
 | Starfield          | CSS animated star layers with warp speed mode        |
 | ControlPanel       | Floating bottom panel with tab navigation            |
 | MissionsPanel      | Mission list with inline progress bars and filters   |
@@ -143,16 +143,24 @@
 | MissionActions     | Phase-specific action buttons and progress displays  |
 | CountdownTimer     | Animated SVG countdown ring with urgency escalation  |
 | MissionProgressBar | Color-coded progress bars for travel/explore phases  |
-| MissionForm        | Dialog for creating/editing missions                 |
+| MissionForm        | Dialog for creating/editing missions with rocket type selection (3 types with preview) |
 | CrewForm           | Dialog for creating/editing crew members             |
+| useSounds          | Custom hook for sound effects (beep, launch, complete) |
 
-## 6. Visual Effects
+## 6. Visual & Audio Effects
 
-| Phase          | Effect                                              |
+| Phase          | Visual Effect                                       |
 |----------------|-----------------------------------------------------|
 | Countdown      | Earth orange glow, warning light strips, screen vibration (last 3s), countdown color escalation |
 | Launch         | White flash overlay, screen shake, Earth flash       |
 | Traveling      | Warp speed stars, rocket thruster flame with particles |
-| Exploring      | Purple scanning ring pulses on destination planet    |
+| Exploring      | Purple scanning ring pulses on destination planet, JS-driven orbit animation, landing module deploy/retrieve |
 | Return Launch  | Same flash + shake effects as initial launch         |
 | Complete       | Green celebration glow on Earth                      |
+
+| Feature            | Description                                     |
+|--------------------|-------------------------------------------------|
+| Sound effects      | Beep (countdown), launch rumble, mission complete chime (via useSounds hook) |
+| Rocket selection   | 3 rocket types (Falcon 9, Space Shuttle, Saturn V) with image preview in MissionForm |
+| Orbit animation    | JS-driven continuous orbit around destination planet during Exploring phase |
+| Landing module     | Deploys from rocket to planet surface during Exploring, retrieves during PreparingReturn |

@@ -38,6 +38,11 @@ npm run dev
 
 Open http://localhost:5173
 
+## Live Deployment
+
+- **Frontend:** https://space-mission-control-coral.vercel.app
+- **Backend:** https://space-mission-control-8sze.onrender.com
+
 ## GitHub Repository
 
 https://github.com/Rektoooooo/space-mission-control

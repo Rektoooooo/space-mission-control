@@ -36,21 +36,33 @@ The application is accessible to anyone without registration — serving as an i
 
 Mission Lifecycle:
 
-  [ Planning ] ──> [ Launched ] ──> [ Completed ]
-                                └──> [ Failed ]
+  [ Planning ] ──> [ Preparing ] ──> [ Traveling ] ──> [ Exploring ]
+                        │                  │                │
+                        v                  v                v
+                    [ Failed ]         [ Failed ]       [ Failed ]
+                        │
+  [ Exploring ] ──> [ PreparingReturn ] ──> [ Returning ] ──> [ Completed ]
+                          │                      │
+                          v                      v
+                      [ Failed ]             [ Failed ]
+
+  [ Completed ] ──> [ Planning ]   (reset)
+  [ Failed ]    ──> [ Planning ]   (reset)
 ```
 
 ## Data Entities
 
 ### Mission
 
-| Attribute   | Type   | Description                          |
-|-------------|--------|--------------------------------------|
-| name        | String | Name of the mission (e.g. "Mars Odyssey") |
-| destination | String | Target destination (Moon, Mars, Europa, Titan, etc.) |
-| launchDate  | Date   | Planned launch date                  |
-| status      | String | Current status: Planning, Launched, Completed, Failed |
-| description | String | Mission objective / description      |
+| Attribute      | Type   | Description                          |
+|----------------|--------|--------------------------------------|
+| name           | String | Name of the mission (e.g. "Mars Odyssey") |
+| destination    | String | Target destination (Moon, Mars, Europa, Titan, etc.) |
+| launchDate     | Date   | Planned launch date                  |
+| status         | String | Current status: Planning, Preparing, Traveling, Exploring, PreparingReturn, Returning, Completed, Failed |
+| phaseStartedAt | Date   | Timestamp when the current phase began |
+| rocketType     | String | Rocket type: falcon9, shuttle, saturnV (user picks per mission) |
+| description    | String | Mission objective / description      |
 
 ### CrewMember
 
@@ -99,6 +111,7 @@ Mission Lifecycle:
 
 > As a user, I want to update and monitor the status of each mission so that I can follow the lifecycle of every space expedition.
 
-- Change mission status (Planning → Launched → Completed / Failed)
-- See visual status indicators on the mission dashboard
+- Transition mission status through validated phases via dedicated endpoint (PATCH /api/missions/:id/transition)
+- Valid transitions: Planning → Preparing (requires crew), Preparing → Traveling/Failed, Traveling → Exploring/Failed, Exploring → PreparingReturn/Failed, PreparingReturn → Returning/Failed, Returning → Completed/Failed, Completed → Planning, Failed → Planning
+- See visual status indicators, countdown timers, progress bars, and phase-specific action buttons
 - Filter/sort missions by status or destination
