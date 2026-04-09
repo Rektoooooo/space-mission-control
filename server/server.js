@@ -1,4 +1,5 @@
-require("dotenv").config();
+require("dotenv").config({ path: ".env" });
+// dotenv only loads from .env file (local dev). On Render, env vars come from the dashboard.
 const express = require("express");
 const cors = require("cors");
 const connectDB = require("./config/db");
