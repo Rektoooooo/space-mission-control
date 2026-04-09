@@ -1,9 +1,10 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import Starfield from "./Starfield";
 import Earth from "./Earth";
 import Planet from "./Planet";
 import Rocket from "./Rocket";
 import { ROCKET_VISIBLE_STATUSES, ACTIVE_STATUSES } from "@/lib/missionConstants";
+import { useSounds } from "@/hooks/useSounds";
 
 const PLANET_LAYOUT = [
   { name: "Moon", style: { left: "22%", top: "6%" } },
@@ -89,6 +90,43 @@ export default function SpaceScene({
     ).length;
 
   const phase = useScenePhase(missions, lifecycles);
+  const { play } = useSounds();
+  const lastBeepRef = useRef(0);
+
+  // Sound effects: launch and complete
+  useEffect(() => {
+    if (phase.launchFlash) {
+      play("launch", { volume: 0.4 });
+    }
+  }, [phase.launchFlash]);
+
+  useEffect(() => {
+    if (phase.completionFlash) {
+      play("complete", { volume: 0.5 });
+    }
+  }, [phase.completionFlash]);
+
+  // Sound effects: countdown beep every second
+  useEffect(() => {
+    if (!phase.hasCountdown) return;
+
+    const interval = setInterval(() => {
+      const now = Date.now();
+      // Only beep once per second
+      if (now - lastBeepRef.current >= 900) {
+        // Find any active countdown
+        const hasActiveCountdown = Object.values(lifecycles).some(
+          (lc) => lc.countdown !== undefined && lc.countdown > 0 && !lc.countdownDone
+        );
+        if (hasActiveCountdown) {
+          play("beep", { volume: 0.2 });
+          lastBeepRef.current = now;
+        }
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [phase.hasCountdown]);
 
   // Build scene CSS classes
   const sceneClasses = [
