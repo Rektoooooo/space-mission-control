@@ -10,7 +10,7 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
-app.use(cors());
+app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 
 // Routes
@@ -22,8 +22,11 @@ app.get("/", (req, res) => {
   res.json({ message: "Space Mission Control API is running" });
 });
 
-// Connect to DB and start server
-connectDB().then(() => {
+// Connect to DB, seed if empty, and start server
+const seed = require("./seed");
+
+connectDB().then(async () => {
+  await seed();
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
   });

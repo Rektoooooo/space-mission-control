@@ -7,6 +7,7 @@ router.get("/:id", missionController.getById);
 router.post("/", missionController.create);
 router.put("/:id", missionController.update);
 router.delete("/:id", missionController.remove);
+router.patch("/:id/transition", missionController.transitionStatus);
 router.get("/:id/crew", missionController.getCrew);
 
 module.exports = router;

@@ -19,8 +19,21 @@ const missionSchema = new mongoose.Schema(
     status: {
       type: String,
       required: true,
-      enum: ["Planning", "Launched", "Completed", "Failed"],
+      enum: [
+        "Planning",
+        "Preparing",
+        "Traveling",
+        "Exploring",
+        "PreparingReturn",
+        "Returning",
+        "Completed",
+        "Failed",
+      ],
       default: "Planning",
+    },
+    phaseStartedAt: {
+      type: Date,
+      default: null,
     },
     description: {
       type: String,
