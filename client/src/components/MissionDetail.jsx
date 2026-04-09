@@ -146,7 +146,7 @@ export default function MissionDetail({
               onValueChange={handleRocketChange}
             >
               <SelectTrigger className="w-40 h-8 text-xs">
-                <SelectValue />
+                <SelectValue>{currentRocket.label}</SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {ROCKET_OPTIONS.map((r) => (
@@ -203,7 +203,14 @@ export default function MissionDetail({
           <div className="flex items-center gap-2">
             <Select value={assignId} onValueChange={setAssignId}>
               <SelectTrigger className="flex-1 h-8 text-xs">
-                <SelectValue placeholder="Select crew member to assign..." />
+                <SelectValue placeholder="Select crew member to assign...">
+                  {assignId
+                    ? (() => {
+                        const c = unassigned.find((m) => m._id === assignId);
+                        return c ? `${c.name} (${c.role})` : "Select...";
+                      })()
+                    : "Select crew member to assign..."}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {unassigned.length === 0 ? (

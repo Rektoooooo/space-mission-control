@@ -239,19 +239,7 @@
   to { transform: rotate(360deg); }
 }
 
-/* ===== PLANET SCANNING / EXPLORING EFFECT ===== */
-.planet-exploring {
-  position: relative;
-}
-
-.planet-exploring::after {
-  content: '';
-  position: absolute;
-  inset: -8px;
-  border: 2px solid rgba(168, 85, 247, 0.4);
-  border-radius: 50%;
-  animation: scan-ring 2s ease-in-out infinite;
-}
+/* ===== PLANET SCANNING / EXPLORING EFFECT (disabled — orbit animation replaces it) ===== */
 
 @keyframes scan-ring {
   0% {

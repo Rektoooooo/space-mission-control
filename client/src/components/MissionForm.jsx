@@ -120,7 +120,7 @@ export default function MissionForm({ open, onClose, onSubmit, mission }) {
                 onValueChange={(v) => setForm({ ...form, rocketType: v })}
               >
                 <SelectTrigger className="flex-1">
-                  <SelectValue />
+                  <SelectValue>{currentRocket.label}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {ROCKET_OPTIONS.map((r) => (
